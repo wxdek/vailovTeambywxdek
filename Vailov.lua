@@ -1,4 +1,34 @@
 local Players = game:GetService("Players")
+
+-- БАЗОВАЯ ЗАЩИТА ОТ АНТИЧИТА
+pcall(function()
+    -- Случайное имя для GUI
+    local guiNames = {"CoreGui", "SystemUI", "NotificationUI", "PopupUI", "MenuUI"}
+    local randomName = guiNames[math.random(1, #guiNames)] .. "_" .. math.random(1000, 9999)
+    
+    -- Защита от обнаружения по имени
+    local oldFindFirstChild = hookmetamethod(game, "__namecall", function(self, ...)
+        local method = getnamecallmethod()
+        local args = {...}
+        if method == "FindFirstChild" then
+            local name = tostring(args[1] or "")
+            if string.find(name, "BeautifulESP") or string.find(name, "ESP_") then
+                return nil
+            end
+        end
+        return oldFindFirstChild(self, ...)
+    end)
+    
+    -- Защита от удаления GUI
+    local oldDestroy = hookmetamethod(game, "__namecall", function(self, ...)
+        local method = getnamecallmethod()
+        if method == "Destroy" and tostring(self):find("ESP") then
+            return
+        end
+        return oldDestroy(self, ...)
+    end)
+end)
+
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
@@ -7,11 +37,12 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 
 -- Главный GUI
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BeautifulESP"
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Name = "CoreUI_" .. math.random(10000, 99999)
+ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.DisplayOrder = 999
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 
 -- ЗВУК
 local NotifySound = Instance.new("Sound")
@@ -136,7 +167,7 @@ ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.BorderSizePixel = 0
 ScrollFrame.ScrollBarThickness = 4
 ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(170, 0, 255)
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 550)
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 680)
 ScrollFrame.VerticalScrollBarInset = Enum.ScrollBarInset.Always
 ScrollFrame.ScrollingDirection = Enum.ScrollingDirection.Y
 
@@ -250,10 +281,9 @@ ResizeHelp.MouseButton1Click:Connect(function()
     ShowTooltip("Включает режим изменения размера панели. Потяните за контур.", pos, ResizeHelp)
 end)
 
--- ГОРЯЧАЯ КЛАВИША
 local KeybindBtn = Instance.new("TextButton", SM)
 KeybindBtn.Size = UDim2.new(0, 80, 0, 24); KeybindBtn.Position = UDim2.new(0.06, 0, 0.50, 0)
-KeybindBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40); KeybindBtn.Text = "P"
+KeybindBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40); KeybindBtn.Text = "Z"
 KeybindBtn.TextColor3 = Color3.new(1, 1, 1); KeybindBtn.Font = Enum.Font.GothamBold
 KeybindBtn.TextSize = 13; KeybindBtn.AutoButtonColor = false
 Instance.new("UICorner", KeybindBtn).CornerRadius = UDim.new(0, 6)
@@ -305,11 +335,9 @@ local SDiv = Instance.new("Frame", SM)
 SDiv.Size = UDim2.new(1, -20, 0, 1); SDiv.Position = UDim2.new(0, 10, 0, 62)
 SDiv.BackgroundColor3 = Color3.fromRGB(100, 100, 100); SDiv.BackgroundTransparency = 0.7; SDiv.BorderSizePixel = 0
 
--- ========== КОНТЕНТ (ВСЕ ПОЗИЦИИ В ПИКСЕЛЯХ) ==========
+-- ========== КОНТЕНТ ==========
 
 local y = 5
-
--- ЗАГОЛОВОК ESP
 local EspTitle = Instance.new("TextLabel", ContentFrame)
 EspTitle.Size = UDim2.new(0, 100, 0, 20); EspTitle.Position = UDim2.new(0, 15, 0, y)
 EspTitle.BackgroundTransparency = 1; EspTitle.Text = "👁 ESP"
@@ -317,7 +345,6 @@ EspTitle.TextColor3 = Color3.fromRGB(170, 0, 255); EspTitle.Font = Enum.Font.Got
 EspTitle.TextSize = 14; EspTitle.TextXAlignment = Enum.TextXAlignment.Left
 
 y = 30
--- ЧЕКБОКС ESP
 local ESPBtn = Instance.new("TextButton", ContentFrame)
 ESPBtn.Size = UDim2.new(0, 24, 0, 24); ESPBtn.Position = UDim2.new(0, 15, 0, y)
 ESPBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 255); ESPBtn.Text = "✓"
@@ -342,7 +369,6 @@ ESPHelp.MouseButton1Click:Connect(function()
 end)
 
 y = 65
--- ЧЕКБОКС ТОЛЬКО ВИДИМЫЕ
 local VisBtn = Instance.new("TextButton", ContentFrame)
 VisBtn.Size = UDim2.new(0, 24, 0, 24); VisBtn.Position = UDim2.new(0, 15, 0, y)
 VisBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 255); VisBtn.Text = "✓"
@@ -367,7 +393,6 @@ VisHelp.MouseButton1Click:Connect(function()
 end)
 
 y = 100
--- ЧЕКБОКС ГРАДИЕНТНАЯ ПОДСВЕТКА
 local GradientESPBtn = Instance.new("TextButton", ContentFrame)
 GradientESPBtn.Size = UDim2.new(0, 24, 0, 24); GradientESPBtn.Position = UDim2.new(0, 15, 0, y)
 GradientESPBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60); GradientESPBtn.Text = "X"
@@ -393,7 +418,6 @@ GradientESPHelp.MouseButton1Click:Connect(function()
 end)
 
 y = 135
--- ЧЕКБОКС ВИДЕТЬ ТЕМЫ
 local ShowTeamBtn = Instance.new("TextButton", ContentFrame)
 ShowTeamBtn.Size = UDim2.new(0, 24, 0, 24); ShowTeamBtn.Position = UDim2.new(0, 15, 0, y)
 ShowTeamBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60); ShowTeamBtn.Text = "X"
@@ -419,7 +443,6 @@ ShowTeamHelp.MouseButton1Click:Connect(function()
 end)
 
 y = 170
--- СЛАЙДЕР ПРОЗРАЧНОСТИ
 local TrText = Instance.new("TextLabel", ContentFrame)
 TrText.Size = UDim2.new(0, 160, 0, 20); TrText.Position = UDim2.new(0, 15, 0, y)
 TrText.BackgroundTransparency = 1; TrText.Text = "Прозрачность обводки"
@@ -451,7 +474,6 @@ local TIS = Instance.new("UIStroke", TInput)
 TIS.Color = Color3.fromRGB(170, 0, 255); TIS.Thickness = 1; TIS.Transparency = 0.5
 
 y = 220
--- ЗАГОЛОВОК AIMBOT
 local AimTitle = Instance.new("TextLabel", ContentFrame)
 AimTitle.Size = UDim2.new(0, 100, 0, 20); AimTitle.Position = UDim2.new(0, 15, 0, y)
 AimTitle.BackgroundTransparency = 1; AimTitle.Text = "🎯 AIMBOT"
@@ -459,7 +481,6 @@ AimTitle.TextColor3 = Color3.fromRGB(255, 80, 80); AimTitle.Font = Enum.Font.Got
 AimTitle.TextSize = 14; AimTitle.TextXAlignment = Enum.TextXAlignment.Left
 
 y = 245
--- ЧЕКБОКС AIMBOT
 local AimBtn = Instance.new("TextButton", ContentFrame)
 AimBtn.Size = UDim2.new(0, 24, 0, 24); AimBtn.Position = UDim2.new(0, 15, 0, y)
 AimBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60); AimBtn.Text = "X"
@@ -485,7 +506,6 @@ AimHelp.MouseButton1Click:Connect(function()
 end)
 
 y = 280
--- КЛАВИША АКТИВАЦИИ AIMBOT
 local AimKeyLabel = Instance.new("TextLabel", ContentFrame)
 AimKeyLabel.Size = UDim2.new(0, 180, 0, 20); AimKeyLabel.Position = UDim2.new(0, 15, 0, y)
 AimKeyLabel.BackgroundTransparency = 1; AimKeyLabel.Text = "Клавиша активации аимбота"
@@ -495,7 +515,7 @@ AimKeyLabel.TextSize = 12; AimKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
 y = 305
 local AimKeyBtn = Instance.new("TextButton", ContentFrame)
 AimKeyBtn.Size = UDim2.new(0, 80, 0, 24); AimKeyBtn.Position = UDim2.new(0, 15, 0, y)
-AimKeyBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40); AimKeyBtn.Text = "ЛКМ"
+AimKeyBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40); AimKeyBtn.Text = "ПКМ"
 AimKeyBtn.TextColor3 = Color3.new(1, 1, 1); AimKeyBtn.Font = Enum.Font.GothamBold
 AimKeyBtn.TextSize = 13; AimKeyBtn.AutoButtonColor = false
 Instance.new("UICorner", AimKeyBtn).CornerRadius = UDim.new(0, 6)
@@ -508,11 +528,10 @@ AimKeyHelp.TextSize = 12; AimKeyHelp.AutoButtonColor = false
 Instance.new("UICorner", AimKeyHelp).CornerRadius = UDim.new(1, 0)
 AimKeyHelp.MouseButton1Click:Connect(function()
     local pos = UDim2.new(0, AimKeyHelp.AbsolutePosition.X - 100, 0, AimKeyHelp.AbsolutePosition.Y + 25)
-    ShowTooltip("Нажмите на кнопку, затем нажмите нужную клавишу для активации AimBot. По умолчанию ЛКМ.", pos, AimKeyHelp)
+    ShowTooltip("Нажмите на кнопку, затем нажмите нужную клавишу для активации AimBot. По умолчанию ПКМ.", pos, AimKeyHelp)
 end)
 
 y = 345
--- ЧЕКБОКС TEAM CHECK
 local TeamCheckBtn = Instance.new("TextButton", ContentFrame)
 TeamCheckBtn.Size = UDim2.new(0, 24, 0, 24); TeamCheckBtn.Position = UDim2.new(0, 15, 0, y)
 TeamCheckBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60); TeamCheckBtn.Text = "X"
@@ -538,7 +557,6 @@ TeamCheckHelp.MouseButton1Click:Connect(function()
 end)
 
 y = 380
--- ЧЕКБОКС TRIGGER BOT
 local TriggerBotBtn = Instance.new("TextButton", ContentFrame)
 TriggerBotBtn.Size = UDim2.new(0, 24, 0, 24); TriggerBotBtn.Position = UDim2.new(0, 15, 0, y)
 TriggerBotBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60); TriggerBotBtn.Text = "X"
@@ -564,7 +582,6 @@ TriggerBotHelp.MouseButton1Click:Connect(function()
 end)
 
 y = 415
--- ЧЕКБОКС FOV
 local FovVisBtn = Instance.new("TextButton", ContentFrame)
 FovVisBtn.Size = UDim2.new(0, 24, 0, 24); FovVisBtn.Position = UDim2.new(0, 15, 0, y)
 FovVisBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60); FovVisBtn.Text = "X"
@@ -590,7 +607,6 @@ FovVisHelp.MouseButton1Click:Connect(function()
 end)
 
 y = 450
--- СЛАЙДЕР FOV
 local FovText = Instance.new("TextLabel", ContentFrame)
 FovText.Size = UDim2.new(0, 120, 0, 20); FovText.Position = UDim2.new(0, 15, 0, y)
 FovText.BackgroundTransparency = 1; FovText.Text = "Размер FOV"
@@ -620,6 +636,94 @@ FovInput.TextSize = 12; FovInput.BorderSizePixel = 0
 Instance.new("UICorner", FovInput).CornerRadius = UDim.new(0, 6)
 local FovIS = Instance.new("UIStroke", FovInput)
 FovIS.Color = Color3.fromRGB(255, 80, 80); FovIS.Thickness = 1; FovIS.Transparency = 0.5
+
+y = 510
+local VisualsTitle = Instance.new("TextLabel", ContentFrame)
+VisualsTitle.Size = UDim2.new(0, 100, 0, 20); VisualsTitle.Position = UDim2.new(0, 15, 0, y)
+VisualsTitle.BackgroundTransparency = 1; VisualsTitle.Text = "🌈 ВИЗУАЛЫ"
+VisualsTitle.TextColor3 = Color3.fromRGB(255, 200, 50); VisualsTitle.Font = Enum.Font.GothamBold
+VisualsTitle.TextSize = 14; VisualsTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+y = 535
+local BigFovBtn = Instance.new("TextButton", ContentFrame)
+BigFovBtn.Size = UDim2.new(0, 24, 0, 24); BigFovBtn.Position = UDim2.new(0, 15, 0, y)
+BigFovBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60); BigFovBtn.Text = "X"
+BigFovBtn.TextColor3 = Color3.new(1, 1, 1); BigFovBtn.Font = Enum.Font.GothamBold; BigFovBtn.TextSize = 14
+BigFovBtn.AutoButtonColor = false
+Instance.new("UICorner", BigFovBtn).CornerRadius = UDim.new(0, 6)
+
+local BigFovLabel = Instance.new("TextLabel", ContentFrame)
+BigFovLabel.Size = UDim2.new(0, 140, 0, 24); BigFovLabel.Position = UDim2.new(0, 55, 0, y)
+BigFovLabel.BackgroundTransparency = 1; BigFovLabel.Text = "Увеличить FOV"
+BigFovLabel.TextColor3 = Color3.new(1, 1, 1); BigFovLabel.Font = Enum.Font.Gotham
+BigFovLabel.TextSize = 13; BigFovLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local BigFovHelp = Instance.new("TextButton", ContentFrame)
+BigFovHelp.Size = UDim2.new(0, 18, 0, 18); BigFovHelp.Position = UDim2.new(0, 210, 0, y + 3)
+BigFovHelp.BackgroundColor3 = Color3.fromRGB(100, 100, 100); BigFovHelp.Text = "?"
+BigFovHelp.TextColor3 = Color3.new(1, 1, 1); BigFovHelp.Font = Enum.Font.GothamBold
+BigFovHelp.TextSize = 12; BigFovHelp.AutoButtonColor = false
+Instance.new("UICorner", BigFovHelp).CornerRadius = UDim.new(1, 0)
+BigFovHelp.MouseButton1Click:Connect(function()
+    local pos = UDim2.new(0, BigFovHelp.AbsolutePosition.X - 100, 0, BigFovHelp.AbsolutePosition.Y + 25)
+    ShowTooltip("Увеличивает FOV камеры для большего обзора. Максимум 120.", pos, BigFovHelp)
+end)
+
+y = 570
+local BigFovText = Instance.new("TextLabel", ContentFrame)
+BigFovText.Size = UDim2.new(0, 120, 0, 20); BigFovText.Position = UDim2.new(0, 15, 0, y)
+BigFovText.BackgroundTransparency = 1; BigFovText.Text = "Размер FOV камеры"
+BigFovText.TextColor3 = Color3.fromRGB(180, 180, 180); BigFovText.Font = Enum.Font.Gotham
+BigFovText.TextSize = 12; BigFovText.TextXAlignment = Enum.TextXAlignment.Left
+
+y = 595
+local BigFovSliderBg = Instance.new("Frame", ContentFrame)
+BigFovSliderBg.Size = UDim2.new(0, 180, 0, 4); BigFovSliderBg.Position = UDim2.new(0, 15, 0, y)
+BigFovSliderBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30); BigFovSliderBg.BorderSizePixel = 0
+Instance.new("UICorner", BigFovSliderBg).CornerRadius = UDim.new(1, 0)
+
+local BigFovSliderFill = Instance.new("Frame", BigFovSliderBg)
+BigFovSliderFill.Size = UDim2.new(1, 0, 1, 0); BigFovSliderFill.BackgroundColor3 = Color3.fromRGB(255, 200, 50); BigFovSliderFill.BorderSizePixel = 0
+Instance.new("UICorner", BigFovSliderFill).CornerRadius = UDim.new(1, 0)
+
+local BigFovSliderKnob = Instance.new("TextButton", BigFovSliderBg)
+BigFovSliderKnob.Size = UDim2.new(0, 14, 0, 14); BigFovSliderKnob.Position = UDim2.new(1, -7, 0.5, -7)
+BigFovSliderKnob.BackgroundColor3 = Color3.new(1, 1, 1); BigFovSliderKnob.Text = ""
+Instance.new("UICorner", BigFovSliderKnob).CornerRadius = UDim.new(1, 0)
+
+local BigFovInput = Instance.new("TextBox", ContentFrame)
+BigFovInput.Size = UDim2.new(0, 45, 0, 22); BigFovInput.Position = UDim2.new(0, 195, 0, y - 25)
+BigFovInput.BackgroundColor3 = Color3.fromRGB(20, 20, 20); BigFovInput.Text = "120"
+BigFovInput.TextColor3 = Color3.new(1, 1, 1); BigFovInput.Font = Enum.Font.Gotham
+BigFovInput.TextSize = 12; BigFovInput.BorderSizePixel = 0
+Instance.new("UICorner", BigFovInput).CornerRadius = UDim.new(0, 6)
+local BigFovIS = Instance.new("UIStroke", BigFovInput)
+BigFovIS.Color = Color3.fromRGB(255, 200, 50); BigFovIS.Thickness = 1; BigFovIS.Transparency = 0.5
+
+y = 630
+local StretchBtn = Instance.new("TextButton", ContentFrame)
+StretchBtn.Size = UDim2.new(0, 24, 0, 24); StretchBtn.Position = UDim2.new(0, 15, 0, y)
+StretchBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60); StretchBtn.Text = "X"
+StretchBtn.TextColor3 = Color3.new(1, 1, 1); StretchBtn.Font = Enum.Font.GothamBold; StretchBtn.TextSize = 14
+StretchBtn.AutoButtonColor = false
+Instance.new("UICorner", StretchBtn).CornerRadius = UDim.new(0, 6)
+
+local StretchLabel = Instance.new("TextLabel", ContentFrame)
+StretchLabel.Size = UDim2.new(0, 140, 0, 24); StretchLabel.Position = UDim2.new(0, 55, 0, y)
+StretchLabel.BackgroundTransparency = 1; StretchLabel.Text = "Растяг экрана 4:3"
+StretchLabel.TextColor3 = Color3.new(1, 1, 1); StretchLabel.Font = Enum.Font.Gotham
+StretchLabel.TextSize = 13; StretchLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local StretchHelp = Instance.new("TextButton", ContentFrame)
+StretchHelp.Size = UDim2.new(0, 18, 0, 18); StretchHelp.Position = UDim2.new(0, 210, 0, y + 3)
+StretchHelp.BackgroundColor3 = Color3.fromRGB(100, 100, 100); StretchHelp.Text = "?"
+StretchHelp.TextColor3 = Color3.new(1, 1, 1); StretchHelp.Font = Enum.Font.GothamBold
+StretchHelp.TextSize = 12; StretchHelp.AutoButtonColor = false
+Instance.new("UICorner", StretchHelp).CornerRadius = UDim.new(1, 0)
+StretchHelp.MouseButton1Click:Connect(function()
+    local pos = UDim2.new(0, StretchHelp.AbsolutePosition.X - 100, 0, StretchHelp.AbsolutePosition.Y + 25)
+    ShowTooltip("Растягивает экран в соотношении 4:3 для лучшего обзора.", pos, StretchHelp)
+end)
 
 -- ПОЛОСКА
 local HBar = Instance.new("Frame", ScreenGui)
@@ -654,6 +758,8 @@ Hover(AimKeyHelp, Color3.fromRGB(100, 100, 100), Color3.fromRGB(150, 150, 150))
 Hover(TeamCheckHelp, Color3.fromRGB(100, 100, 100), Color3.fromRGB(150, 150, 150))
 Hover(TriggerBotHelp, Color3.fromRGB(100, 100, 100), Color3.fromRGB(150, 150, 150))
 Hover(FovVisHelp, Color3.fromRGB(100, 100, 100), Color3.fromRGB(150, 150, 150))
+Hover(BigFovHelp, Color3.fromRGB(100, 100, 100), Color3.fromRGB(150, 150, 150))
+Hover(StretchHelp, Color3.fromRGB(100, 100, 100), Color3.fromRGB(150, 150, 150))
 Hover(KeybindHelp, Color3.fromRGB(100, 100, 100), Color3.fromRGB(150, 150, 150))
 
 -- СОСТОЯНИЯ
@@ -663,12 +769,16 @@ local showTeam = false
 local gradientESP = false
 local outTransp = 0.0
 local aimEnabled = false
-local aimKey = "MouseButton1"
+local aimKey = "MouseButton2"
 local listeningForAimKey = false
 local teamCheck = false
 local triggerBot = false
 local showFov = false
 local fovSize = 150
+local bigFovEnabled = false
+local bigFovValue = 120
+local stretchEnabled = false
+local stretchValue = 0.65
 local minimized = false
 local closed = false
 local resizeMode = false
@@ -680,7 +790,7 @@ local im = nil; local ips = nil; local ipp = nil
 local savedSize = DEFAULT_SIZE
 local savedPos = DEFAULT_POS
 local ESPs = {}
-local hotkey = Enum.KeyCode.P
+local hotkey = Enum.KeyCode.Z
 local listeningForKey = false
 local isAnimating = false
 local aimKeyDown = false
@@ -700,6 +810,8 @@ local Camera = workspace.CurrentCamera
 
 UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 and aimKey == "MouseButton1" then
+        aimKeyDown = true
+    elseif input.UserInputType == Enum.UserInputType.MouseButton2 and aimKey == "MouseButton2" then
         aimKeyDown = true
     elseif input.UserInputType == Enum.UserInputType.Keyboard then
         if listeningForKey then
@@ -756,6 +868,8 @@ end)
 
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 and aimKey == "MouseButton1" then
+        aimKeyDown = false
+    elseif input.UserInputType == Enum.UserInputType.MouseButton2 and aimKey == "MouseButton2" then
         aimKeyDown = false
     elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == aimKey then
         aimKeyDown = false
@@ -844,10 +958,25 @@ RunService.RenderStepped:Connect(function(delta)
         return
     end
     
+        -- Обновление FOV камеры (только если включено)
+    if bigFovEnabled then
+        Camera.FieldOfView = bigFovValue
+    end
+    
+    -- Растяг экрана 4:3
+    if stretchEnabled then
+        Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, stretchValue, 0, 0, 0, 1)
+    end
+    
     if aimEnabled and aimKeyDown then
         local target = GetClosestPlayerInFov()
         if target and target.Character and target.Character:FindFirstChild("Head") then
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position)
+            local headPos = target.Character.Head.Position
+            local camPos = Camera.CFrame.Position
+            Camera.CFrame = CFrame.new(camPos, headPos)
+            if stretchEnabled then
+                Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, stretchValue, 0, 0, 0, 1)
+            end
         end
     end
     FovCircle.Visible = showFov and not closed
@@ -857,7 +986,6 @@ RunService.RenderStepped:Connect(function(delta)
         FovCircle.Radius = fovSize / 2
     end
     
-    -- Триггер бот
     if triggerBot and aimEnabled and aimKeyDown then
         local target = GetClosestPlayerInFov()
         if target and target.Character and target.Character:FindFirstChild("Head") then
@@ -891,7 +1019,6 @@ RunService.RenderStepped:Connect(function(delta)
         end
     end
     
-    -- Обновление градиентной подсветки
     if gradientESP then
         espGradientTime = espGradientTime + delta * 0.6
         for _, data in pairs(ESPs) do
@@ -914,6 +1041,16 @@ local function UpdFovSlider(v)
     fovSize = math.floor(50 + cv * 350)
     FovSliderFill.Size = UDim2.new(cv, 0, 1, 0); FovSliderKnob.Position = UDim2.new(cv, -7, 0.5, -7)
     FovInput.Text = tostring(fovSize)
+end
+
+local function UpdBigFovSlider(v)
+    local cv = math.clamp(v, 0, 1)
+    bigFovValue = math.floor(70 + cv * 50)
+    BigFovSliderFill.Size = UDim2.new(cv, 0, 1, 0); BigFovSliderKnob.Position = UDim2.new(cv, -7, 0.5, -7)
+    BigFovInput.Text = tostring(bigFovValue)
+    if bigFovEnabled then
+        Camera.FieldOfView = bigFovValue
+    end
 end
 
 local function ResetPanel()
@@ -1076,6 +1213,13 @@ ClsBtn.MouseButton1Click:Connect(function()
     if isAnimating then return end
     isAnimating = true
     closed = true
+    Camera.FieldOfView = 70
+    bigFovEnabled = false
+    BigFovBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    BigFovBtn.Text = "X"
+    stretchEnabled = false
+    StretchBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    StretchBtn.Text = "X"
     TweenService:Create(Panel, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
         Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, -1, 0.97, -3)
     }):Play()
@@ -1168,6 +1312,25 @@ FovVisBtn.MouseButton1Click:Connect(function()
     showFov = not showFov
     FovVisBtn.BackgroundColor3 = showFov and Color3.fromRGB(255, 80, 80) or Color3.fromRGB(60, 60, 60)
     FovVisBtn.Text = showFov and "✓" or "X"
+end)
+
+-- УВЕЛИЧИТЬ FOV
+BigFovBtn.MouseButton1Click:Connect(function()
+    bigFovEnabled = not bigFovEnabled
+    BigFovBtn.BackgroundColor3 = bigFovEnabled and Color3.fromRGB(255, 200, 50) or Color3.fromRGB(60, 60, 60)
+    BigFovBtn.Text = bigFovEnabled and "✓" or "X"
+    if bigFovEnabled then
+        Camera.FieldOfView = bigFovValue
+    else
+        Camera.FieldOfView = 70
+    end
+end)
+
+-- РАСТЯГ ЭКРАНА
+StretchBtn.MouseButton1Click:Connect(function()
+    stretchEnabled = not stretchEnabled
+    StretchBtn.BackgroundColor3 = stretchEnabled and Color3.fromRGB(255, 200, 50) or Color3.fromRGB(60, 60, 60)
+    StretchBtn.Text = stretchEnabled and "✓" or "X"
 end)
 
 -- ГРАДИЕНТНАЯ ПОДСВЕТКА
@@ -1277,7 +1440,7 @@ end)
 UserInputService.InputEnded:Connect(function(inp) if inp.UserInputType == Enum.UserInputType.MouseButton1 then ds = false end end)
 TInput.FocusLost:Connect(function() local n = tonumber(TInput.Text); if n then UpdSlider(n); UpdateAllESP() end end)
 
--- СЛАЙДЕР FOV
+-- СЛАЙДЕР FOV (AIMBOT)
 local fds = false
 FovSliderKnob.MouseButton1Down:Connect(function() fds = true end)
 UserInputService.InputChanged:Connect(function(inp)
@@ -1289,6 +1452,23 @@ UserInputService.InputEnded:Connect(function(inp) if inp.UserInputType == Enum.U
 FovInput.FocusLost:Connect(function()
     local n = tonumber(FovInput.Text)
     if n then UpdFovSlider(math.clamp((n - 50) / 350, 0, 1)) end
+end)
+
+-- СЛАЙДЕР FOV КАМЕРЫ
+local bfds = false
+BigFovSliderKnob.MouseButton1Down:Connect(function() bfds = true end)
+UserInputService.InputChanged:Connect(function(inp)
+    if bfds and inp.UserInputType == Enum.UserInputType.MouseMovement then
+        UpdBigFovSlider((UserInputService:GetMouseLocation().X - BigFovSliderBg.AbsolutePosition.X) / BigFovSliderBg.AbsoluteSize.X)
+    end
+end)
+UserInputService.InputEnded:Connect(function(inp) if inp.UserInputType == Enum.UserInputType.MouseButton1 then bfds = false end end)
+BigFovInput.FocusLost:Connect(function()
+    local n = tonumber(BigFovInput.Text)
+    if n then
+        n = math.clamp(n, 70, 120)
+        UpdBigFovSlider((n - 70) / 50)
+    end
 end)
 
 -- ЗАПУСК
